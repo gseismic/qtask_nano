@@ -3,12 +3,14 @@ from setuptools import setup, find_packages
 
 setup(
     name='qtask_nano', 
-    version='0.0.1', 
+    version='0.1.0', 
     packages=find_packages(),
     description='A simple Python task queue',
-    install_requires=['redis'],
+    install_requires=['redis', 'psycopg2-binary', 'loguru', 'tenacity'],
+
     entry_points={
         'console_scripts': [
+            'qtask_nano=qtask_nano.query_cli:main',
         ],
     },
     python_requires='>=3',
