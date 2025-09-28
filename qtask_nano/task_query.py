@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from qtask_nano import TaskQueue, Task, RedisQueue, PostgreSQLQueue
 from qtask_nano.logger import logger
 
-__all__ = ['TaskQuery', 'RedisQueryBackend', 'PostgreSQLQueryBackend']
+__all__ = ['TaskQuery', 'RedisQueryBackend', 'PostgreSQLQueryBackend', 'TaskQueryCLI']
 
 # 设置日志
 # logger = logging.getLogger('TaskQuery')
