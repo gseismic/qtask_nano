@@ -9,8 +9,9 @@
 - ⏰ **自动过期清理**: 支持任务 Key 自动过期，避免数据积累
 - 📊 **任务查询系统**: 提供统一的任务查询接口和 CLI 工具
 - 🔍 **健康监控**: 内置队列健康状态检查
-- 📝 **详细日志**: 基于 loguru 的日志系统
+- 📝 **日志系统**: 基于 loguru 的日志系统
 - 🛠️ **CLI 工具**: 命令行界面支持任务查询和管理
+- [ ] **TODO**: UI
 
 ## 📦 安装
 
@@ -23,7 +24,7 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/gseismic/qtask_nano 
 cd qtask_nano
 
 # 安装依赖
