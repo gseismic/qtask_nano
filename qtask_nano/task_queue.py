@@ -240,7 +240,6 @@ class RedisQueue(BaseQueue):
                 create_time = self.redis.hget(self._create_time_rkey, key)
                 if create_time:
                     age_ms = now - int(create_time)
-                    logger.debug(f"Todo key {key}: create_time={create_time}, age_ms={age_ms}, expire_ms={expire_ms}")
                     if age_ms > expire_ms:
                         # 原子操作：从todo列表和创建时间记录中移除
                         pipe = self.redis.pipeline()
@@ -248,7 +247,8 @@ class RedisQueue(BaseQueue):
                         pipe.hdel(self._create_time_rkey, key)
                         pipe.execute()
                         total_removed += 1
-                        logger.debug(f"Removed expired todo key: {key}")
+                        logger.debug(f"【Removed expired】Todo key {key}: create_time={create_time}, age_ms={age_ms}, expire_ms={expire_ms}")
+                        # logger.debug(f"Removed expired todo key: {key}")
                 else:
                     logger.warning(f"Todo key {key}: no create_time found, skipping cleanup")
                     # 如果没有创建时间记录，跳过清理，保留Key
@@ -556,6 +556,19 @@ class TaskQueue:
             logger.info(f"Using PostgreSQL backend for queue: {namespace}")
         else:
             raise ValueError(f"Unsupported URI scheme: {uri}")
+    
+    def clear_all_queues(self, dry_run: bool = False,
+                         todo: bool = True,
+                         doing: bool = True,
+                         done: bool = True,
+                         error: bool = True,
+                         null: bool = True):
+        if dry_run:
+            logger.info(f"Dry run mode: will reset queues")
+            return
+        
+        logger.info(f"Resetting queues")
+        self.queue.reset(todo=todo, doing=doing, done=done, error=error, null=null)
 
     def add_task(self, task: Task):
         task_data = json.dumps(task.to_dict())
@@ -581,7 +594,7 @@ class TaskQueue:
 
     def requeue_task(self, task: Task):
         task_data = json.dumps(task.to_dict())
-        self.queue.doing_to_todo(task_data)
+        return self.queue.doing_to_todo(task_data)
 
     def get_timeout_tasks(self, timeout_seconds: int) -> List[Task]:
         timeout_data = self.queue.get_timeout_doing_keys(timeout_seconds)
@@ -589,6 +602,18 @@ class TaskQueue:
 
     def requeue_timeout_tasks(self, timeout_seconds: int) -> int:
         return self.queue.move_timeout_to_todo(timeout_seconds)
+
+    def get_doing_tasks(self) -> List[Task]:
+        """获取所有doing状态的任务"""
+        doing_data = self.queue.get_doing_keys()
+        tasks = []
+        for data in doing_data:
+            try:
+                task = Task.from_dict(json.loads(data))
+                tasks.append(task)
+            except Exception as e:
+                logger.warning(f"Failed to parse doing task: {data}, error: {e}")
+        return tasks
 
 class Worker:
     """任务处理器（支持Key过期时间）"""
@@ -607,7 +632,7 @@ class Worker:
         }
         logger.info(f"Registered task handler for: {task_type}")
 
-    def run(self, poll_timeout: int = 1):
+    def run(self, poll_timeout: int = 1, delay: int = 0.001):
         self.running = True
         logger.info(f"Worker {self.worker_id} started")
         
@@ -619,10 +644,14 @@ class Worker:
                 if task:
                     logger.info(f"Processing task: {task.task_id} ({task.task_type})")
                     self._process_task(task)
+                    time.sleep(delay)
                 else:
                     time.sleep(poll_timeout)
+                    
         except KeyboardInterrupt:
             logger.info("Worker stopped by user")
+            # 处理KeyboardInterrupt：将doing状态的任务移回todo队列末尾
+            self._handle_interrupt_cleanup()
         except Exception as e:
             logger.error(f"Worker error: {str(e)}")
         finally:
@@ -632,7 +661,7 @@ class Worker:
     def stop(self):
         self.running = False
 
-    def _process_task(self, task: Task):
+    def _process_task(self, task: Task): 
         try:
             handler_info = self.task_handlers.get(task.task_type)
             if not handler_info:
@@ -656,3 +685,28 @@ class Worker:
             logger.info(f"Found {len(timeout_tasks)} timeout tasks")
             requeued = self.queue.requeue_timeout_tasks(self.timeout_seconds)
             logger.info(f"Requeued {requeued} timeout tasks")
+
+    def _handle_interrupt_cleanup(self):
+        """处理KeyboardInterrupt：将doing状态的任务移回todo队列末尾"""
+        try:
+            print('--------------')
+            # 获取所有doing状态的任务
+            doing_tasks = self.queue.get_doing_tasks()
+            if doing_tasks:
+                logger.info(f"KeyboardInterrupt: Found {len(doing_tasks)} tasks in doing state, moving to todo queue")
+                
+                # 将doing任务移回todo队列末尾
+                requeued_count = 0
+                for task in doing_tasks:
+                    logger.info(f"Requeuing task: {task.task_id} ({task.task_type})")
+                    if self.queue.requeue_task(task):
+                        requeued_count += 1
+                        logger.debug(f"Requeued task {task.task_id} to todo queue")
+                    else:
+                        logger.error(f"Failed to requeue task {task.task_id} to todo queue")
+                
+                logger.info(f"KeyboardInterrupt: Successfully requeued {requeued_count} tasks to todo queue")
+            else:
+                logger.info("KeyboardInterrupt: No tasks in doing state")
+        except Exception as e:
+            logger.error(f"KeyboardInterrupt cleanup failed: {str(e)}")
