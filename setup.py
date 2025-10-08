@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='qtask_nano', 
-    version='0.1.0', 
+    version='0.2.0', 
     packages=find_packages(),
     description='A simple Python task queue',
     install_requires=['redis', 'psycopg2-binary', 'loguru', 'tenacity'],

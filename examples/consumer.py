@@ -53,8 +53,8 @@ def main():
     worker.timeout_seconds = 3  # 设置超时时间为3秒
     
     # 注册任务处理器
-    worker.register_task("demo_task", demo_task_handler, priority=1)
-    worker.register_task("long_task", long_task_handler, priority=2)
+    worker.register_task("demo_task", demo_task_handler, weight=1.0)
+    worker.register_task("long_task", long_task_handler, weight=1.0)
     
     print("📋 已注册的任务处理器:")
     print("  - demo_task: 处理演示任务")
