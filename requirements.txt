@@ -1,4 +1,0 @@
-psycopg2-binary
-redis
-loguru
-tenacity

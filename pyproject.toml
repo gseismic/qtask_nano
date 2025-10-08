@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qtask_nano"
+version = "0.2.0"
+description = "A simple Python task queue"
+requires-python = ">=3"
+authors = [
+    {name = "Liu Shengli", email = "liushengli203@163.com"}
+]
+dependencies = [
+    "redis",
+    "psycopg2-binary", 
+    "loguru",
+    "tenacity",
+]
+
+[project.scripts]
+qtask_nano = "qtask_nano.query_cli:main"
+
+[tool.setuptools]
+packages = ["qtask_nano"]
+include-package-data = true
+zip-safe = false
