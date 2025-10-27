@@ -74,10 +74,10 @@ class TaskQueue:
         queue = self.get_or_make_queue(task.task_type)
         queue.doing_to_done(task_data)
 
-    def mark_error(self, task: Task):
-        task_data = json.dumps(task.to_dict())
-        queue = self.get_or_make_queue(task.task_type)
-        queue.doing_to_error(task_data)
+    def mark_error(self, task: Task): 
+        task_data = json.dumps(task.to_dict()) 
+        queue = self.get_or_make_queue(task.task_type) 
+        queue.doing_to_error(task_data) 
 
     def mark_null(self, task: Task):
         task_data = json.dumps(task.to_dict())

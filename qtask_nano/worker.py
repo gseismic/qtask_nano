@@ -16,23 +16,25 @@ class Worker:
         self.weights = []
         logger.info(f"Worker {worker_id} initialized")
 
-    def register_task(self, task_type: str, handler, weight: int = 1):
-        """注册任务处理函数
+    def register_task(self, task_type: str, handler, weight: int = 1, result_callback=None):
+        """注册任务处理函数 
         
-        Args:
-            task_type: 任务类型
-            handler: 任务处理函数
-            weight: 任务权重 这里是概率权重，用于调度本worker在task_types中被选中的概率
-        Note:
-            - 权重越大，被选中的概率越大
-            - 任务可能被覆盖
+        Args: 
+            task_type: 任务类型 
+            handler: 任务处理函数 
+            weight: 任务权重 这里是概率权重，用于调度本worker在task_types中被选中的概率 
+            result_callback: 任务完成后的回调函数，接收 (task, result) 参数
+        Note: 
+            - 权重越大，被选中的概率越大 
+            - 任务可能被覆盖 
         """
-        if task_type in self.task_handlers:
+        if task_type in self.task_handlers: 
             logger.warning(f"Task handler for {task_type} already registered, will be overwritten")
         
-        self.task_handlers[task_type] = {
+        self.task_handlers[task_type] = { 
             "handler": handler,
-            "weight": weight
+            "weight": weight,
+            "result_callback": result_callback
         }
         # 这里不应注册到queue，因为queue是全局共享的，如果worker宕机不会删除注册的task，不符合预期
         # self.queue.on_register_task(self.worker_id, task_type, weight)
@@ -95,22 +97,29 @@ class Worker:
         try:
             handler_info = self.task_handlers.get(task.task_type)
             if not handler_info: 
-                # 说明系统推送过来一个错误任务
-                logger.error(f"No handler for task type: {task.task_type}")
+                # 说明系统推送过来一个错误任务 
+                logger.error(f"No handler for task type: {task.task_type}") 
                 return 
                 
-            start_time = time.time()
-            handler_info["handler"](task.params)
+            start_time = time.time() 
+            result = handler_info["handler"](task.params) 
+            
+            # 调用结果回调函数（如果存在）
+            result_callback = handler_info.get("result_callback")
+            if result_callback:
+                result_callback(task, result)
+            
+            # 只有在任务处理和回调都成功后才标记为完成
             self.queue.mark_done(task)
             elapsed = time.time() - start_time
             logger.info(f"Task completed: {task.task_id} (duration: {elapsed:.2f}s)")
             
         except Exception as e:
             logger.error(f"Task failed: {task.task_id} - {str(e)}")
-            self.queue.mark_error(task)
+            self.queue.mark_error(task) 
 
-    def _handle_timeout_tasks(self, task_type: str):
-        # 这个应该是后台管理时处理，而非在worker中处理
+    def _handle_timeout_tasks(self, task_type: str): 
+        # 这个应该是后台管理时处理，而非在worker中处理 
         timeout_tasks = self.queue.get_timeout_tasks(task_type, self.timeout_seconds)
         if timeout_tasks:
             logger.info(f"Found {len(timeout_tasks)} timeout tasks")

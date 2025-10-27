@@ -60,19 +60,45 @@ class RedisQueue(BaseQueue):
 
     def reset(self, todo=True, doing=True, done=True, error=True, null=True):
         if todo:
-            self.redis.delete(self._todo_rkey)
+            self.clear_todo_keys()
         if doing:
-            self.redis.delete(self._doing_rkey)
-            self.redis.delete(self._doing_time_rkey)
+            self.clear_doing_keys()
         if done:
-            self.redis.delete(self._done_rkey)
+            self.clear_done_keys()
         if error:
-            self.redis.delete(self._error_rkey)
+            self.clear_error_keys()
         if null:
-            self.redis.delete(self._null_rkey)
-        # 新增：清理创建时间记录
-        self.redis.delete(self._create_time_rkey)
+            self.clear_null_keys()
+            
+        self.clear_create_time_keys()
         logger.info("Queue reset")
+    
+    def clear_todo_keys(self):
+        self.redis.delete(self._todo_rkey)
+    
+    def clear_done_keys(self):
+        self.redis.delete(self._done_rkey)
+    
+    def clear_error_keys(self):
+        self.redis.delete(self._error_rkey)
+    
+    def clear_null_keys(self):
+        self.redis.delete(self._null_rkey)
+    
+    def clear_create_time_keys(self):
+        self.redis.delete(self._create_time_rkey)
+    
+    def clear_doing_keys(self):
+        self.redis.delete(self._doing_rkey)
+        self.redis.delete(self._doing_time_rkey)    
+    
+    def clear_all_keys(self):
+        self.clear_todo_keys()
+        self.clear_doing_keys()
+        self.clear_done_keys()
+        self.clear_error_keys()
+        self.clear_null_keys()
+        self.clear_create_time_keys()
 
     def set_state(self, state: Dict[str, Any]):
         text = json.dumps(state)
@@ -247,3 +273,41 @@ class RedisQueue(BaseQueue):
         
         logger.debug(f"Cleaned up {total_removed} expired keys")
         return total_removed
+
+    def get_total_memory_usage(self) -> float:
+        """
+        获取本队列相关key占用的总内存大小（MB）
+        
+        Returns:
+            float: 总内存使用量（MB）
+        """
+        try:
+            # 获取本队列相关的所有key
+            queue_keys = [
+                self._todo_rkey,
+                self._doing_rkey,
+                self._done_rkey,
+                self._error_rkey,
+                self._null_rkey,
+                self._control_rkey,
+                self._state_rkey,
+                self._doing_time_rkey,
+                self._create_time_rkey
+            ]
+            
+            total_memory_bytes = 0
+            
+            for key in queue_keys:
+                try:
+                    memory = self.redis.memory_usage(key)
+                    total_memory_bytes += memory
+                except Exception as e:
+                    logger.warning(f"获取key {key} 内存使用量失败: {e}")
+                    continue
+            
+            # 转换为MB
+            total_memory_mb = total_memory_bytes / (1024 * 1024)
+            return round(total_memory_mb, 2)
+        except Exception as e:
+            logger.warning(f"计算总内存使用量失败: {e}")
+            return 0.0

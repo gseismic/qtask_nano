@@ -14,6 +14,7 @@ class BaseQueue:
         cleanup_interval: 清理间隔时间（秒），默认60秒（1分钟）
         """
         self.queue_id = queue_id
+        self.uri = uri
         self.key_expire = key_expire or {}
         self.cleanup_interval = cleanup_interval  # 可配置的清理间隔
         self.cleanup_thread = None
@@ -77,6 +78,27 @@ class BaseQueue:
         raise NotImplementedError
         
     def move_timeout_to_todo(self, timeout_seconds: int) -> int:
+        raise NotImplementedError
+    
+    def clear_todo_keys(self):
+        raise NotImplementedError
+    
+    def clear_done_keys(self):
+        raise NotImplementedError
+    
+    def clear_error_keys(self):
+        raise NotImplementedError
+    
+    def clear_null_keys(self):
+        raise NotImplementedError
+    
+    def clear_create_time_keys(self):
+        raise NotImplementedError
+    
+    def clear_doing_keys(self):
+        raise NotImplementedError
+    
+    def clear_all_keys(self):
         raise NotImplementedError
     
     # TODO: get_todo_keys/get_done_keys/get_error_keys/get_null_keys
