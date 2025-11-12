@@ -5,6 +5,7 @@ from .worker import Worker
 from .queue import RedisQueue, PostgreSQLQueue
 from .task_query import TaskQuery, RedisQueryBackend, PostgreSQLQueryBackend, TaskQueryCLI
 # from .query_cli import main
+from .storage_client import StorageClient
 from .logger import logger
 
 __all__ = [

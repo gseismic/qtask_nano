@@ -7,22 +7,24 @@
 import time
 from qtask_nano import TaskQueue, Worker
 
-def demo_task_handler(params):
-    """处理演示任务"""
-    message = params.get("message", "默认消息")
-    timestamp = params.get("timestamp", time.time())
+def demo_task_handler(params): 
+    """处理演示任务""" 
+    message = params.get("message", "默认消息") 
+    timestamp = params.get("timestamp", time.time()) 
     
-    print(f"📝 任务内容: {message}")
-    print(f"   时间戳: {time.ctime(timestamp)}")
-    print(f"   处理时间: {time.ctime()}")
-    time.sleep(1)  # 模拟处理时间
+    print(f"📝 任务内容: {message}") 
+    print(f"   时间戳: {time.ctime(timestamp)}") 
+    print(f"   处理时间: {time.ctime()}") 
+    time.sleep(1)  # 模拟处理时间 
+    return {"status": "success"}
 
-def long_task_handler(params):
-    """处理长时间任务（会超时）"""
-    duration = params.get("duration", 5)
-    print(f"⏳ 开始执行长时间任务，预计耗时: {duration}秒")
+def long_task_handler(params): 
+    """处理长时间任务（会超时）""" 
+    duration = params.get("duration", 5) 
+    print(f"⏳ 开始执行长时间任务，预计耗时: {duration}秒") 
     time.sleep(duration)
     print("✅ 长时间任务完成")
+    return {"status": "success"}
 
 def main():
     """消费者主函数"""

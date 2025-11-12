@@ -49,10 +49,10 @@ class TaskQueue:
         queue = self.get_or_make_queue(task_type)
         queue.reset(todo=todo, doing=doing, done=done, error=error, null=null)
 
-    def add_task(self, task: Task):
-        if not task:
-            logger.warning(f"Task is None")
-            return
+    def add_task(self, task: Task): 
+        if not task: 
+            logger.warning(f"Task is None") 
+            return 
         # print('add_task:', task)
         task_data = json.dumps(task.to_dict())
         queue = self.get_or_make_queue(task.task_type)

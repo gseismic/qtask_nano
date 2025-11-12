@@ -189,7 +189,7 @@ class RedisQueue(BaseQueue):
                 'done_keys': done_keys,
                 'error_keys': error_keys,
                 'null_keys': null_keys,
-            }
+            } 
 
     def get_timeout_doing_keys(self, timeout_seconds: int) -> List[str]:
         cutoff = int(time.time() * 1000) - timeout_seconds * 1000

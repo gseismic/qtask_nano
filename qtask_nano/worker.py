@@ -14,7 +14,7 @@ class Worker:
         self.running = False
         self.timeout_seconds = 300  # 默认超时时间5分钟
         self.weights = []
-        logger.info(f"Worker {worker_id} initialized")
+        logger.info(f"Worker {worker_id} initialized") 
 
     def register_task(self, task_type: str, handler, weight: int = 1, result_callback=None):
         """注册任务处理函数 
@@ -54,7 +54,7 @@ class Worker:
                 
                 task_types = list(self.task_handlers.keys())
                 task_type = random.choices(task_types, weights=self.weights, k=1)[0]
-                task = self.queue.get_task(task_type)
+                task = self.queue.get_task(task_type) 
                 if task:
                     logger.info(f"[Worker {self.worker_id}] Processing task: {task.task_id} ({task.task_type})")
                     self._process_task(task)

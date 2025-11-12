@@ -10,19 +10,21 @@ class Task:
     def __init__(self, task_type: str, params: Dict[str, Any]=None):
         self.task_type = task_type
         self.params = params
-        tag = str(uuid.uuid4())[:8]
-        # 不用task_type+param_hash作为唯一ID的原因: 同一个任务可能被多次重试
-        param_hash = Task.format_task_params(params)
-        self.task_id = f"{task_type}-{param_hash}-{int(time.time_ns()/1000)}-{tag}"
+        self.task_id = Task.make_task_id(task_type, params)
         self.created_at = time.time()
+        
+    @staticmethod
+    def make_task_id(task_type: str, params: Dict[str, Any]=None) -> str:
+        param_hash = Task.format_task_params(params)
+        tag = str(uuid.uuid4())[:8]
+        # 同一个任务可能被多次重试
+        return f"{task_type}-{param_hash}-{int(time.time_ns()/1000)}-{tag}"
     
     @staticmethod
     def format_task_params(params: Dict[str, Any]=None) -> str:
-        if params is None:
-            param_hash = ''
-        else:
-            param_hash = hashlib.md5(json.dumps(params).encode('utf-8')).hexdigest()
-        return param_hash
+        params = params or {}
+        param_hash = hashlib.md5(json.dumps(params).encode('utf-8')).hexdigest()
+        return param_hash 
 
     def to_dict(self) -> Dict[str, Any]:
         return {

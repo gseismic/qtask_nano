@@ -7,7 +7,6 @@
 import argparse
 import json
 import sys
-from datetime import datetime
 from qtask_nano import TaskQueue
 from qtask_nano import TaskQuery, TaskQueryCLI
 

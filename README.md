@@ -17,6 +17,10 @@
 - [ ] query 测试
 - [ ] 添加 UI 支持
 
+## Notes
+- [ ] postgres版本没有测试，应使用redis版本
+- [ ] 对于结果大文件，应通过上传、回传文件URL的方式处理
+
 ## 📦 安装
 
 ### 环境要求
@@ -37,6 +41,20 @@ pip install -r requirements.txt
 # 开发模式安装
 pip install -e .
 ```
+运行 存储服务器
+
+```bash
+python scripts/storage_server.py
+```
+大文件先通过StorageClient上传
+```
+from qtask_nano import StorageClient
+
+client = StorageClient("http://localhost:8000")
+resp = client.upload_file("query_cli.py")
+print(resp['url'])
+```
+
 
 ### 数据库安装
 
