@@ -39,9 +39,9 @@ def main():
     ]
     
     # 添加任务到队列
-    for i, task in enumerate(tasks, 1):
-        queue.add_task(task)
-        print(f"✅ 已添加任务 {i}: {task.task_id} ({task.task_type})")
+    task_ids = queue.add_tasks(tasks)
+    for i, task_id in enumerate(task_ids, 1):
+        print(f"✅ 已添加任务 {i}: {task_id} ({tasks[i-1].task_type})")
         time.sleep(0.5)
     
     print(f"\n📊 总共添加了 {len(tasks)} 个任务到队列")

@@ -20,6 +20,19 @@ class TaskQueue:
         self.queues = {}
         # self.queue = self.make_queue(uri) 
     
+    @classmethod
+    def from_file(cls, cfg_file: str):
+        import yaml
+        if cfg_file.endswith('.yml') or cfg_file.endswith('.yaml'):
+            with open(cfg_file, 'r', encoding='utf-8') as f:
+                cfg = yaml.safe_load(f) or {}
+        elif cfg_file.endswith('.json'):
+            with open(cfg_file, 'r', encoding='utf-8') as f:
+                cfg = json.load(f) or {}
+        else:
+            raise ValueError(f"Unsupported config file format: {cfg_file}")
+        return cls(cfg['namespace'], cfg['uri'], cfg.get('key_expire'), cfg.get('cleanup_interval'))
+    
     def get_or_make_queue(self, task_type: str):
         if task_type not in self.queues:
             self.queues[task_type] = self.make_queue(self.uri)
@@ -45,7 +58,7 @@ class TaskQueue:
             logger.info(f"Dry run mode: will reset queues")
             return
         
-        logger.info(f"Resetting queues")
+        logger.info(f"Resetting queues: task_type={task_type}, todo={todo}, doing={doing}, done={done}, error={error}, null={null}")
         queue = self.get_or_make_queue(task_type)
         queue.reset(todo=todo, doing=doing, done=done, error=error, null=null)
 
@@ -57,10 +70,16 @@ class TaskQueue:
         task_data = json.dumps(task.to_dict())
         queue = self.get_or_make_queue(task.task_type)
         queue.push_key(task_data)
+        return task.task_id
     
-    def add_tasks(self, tasks: List[Task]):
+    def add_tasks(self, tasks: List[Task]) -> List[str]:
+        """添加多个任务到队列
+        """
+        task_ids = []
         for task in tasks:
-            self.add_task(task)
+            task_id = self.add_task(task)
+            task_ids.append(task_id)
+        return task_ids
 
     def get_task(self, task_type: str) -> Optional[Task]:
         queue = self.get_or_make_queue(task_type)
@@ -97,6 +116,10 @@ class TaskQueue:
     def requeue_timeout_tasks(self, task_type: str, timeout_seconds: float) -> int:
         queue = self.get_or_make_queue(task_type) 
         return queue.move_timeout_to_todo(timeout_seconds) 
+    
+    def requeue_error_tasks(self, task_type: str) -> int:
+        queue = self.get_or_make_queue(task_type)
+        return queue.move_error_to_todo()
 
     def get_doing_tasks(self, task_type: str) -> List[Task]:
         """获取某个`任务类型`的所有doing状态的任务

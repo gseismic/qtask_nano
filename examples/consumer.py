@@ -15,16 +15,14 @@ def demo_task_handler(params):
     print(f"📝 任务内容: {message}") 
     print(f"   时间戳: {time.ctime(timestamp)}") 
     print(f"   处理时间: {time.ctime()}") 
-    time.sleep(1)  # 模拟处理时间 
-    return {"status": "success"}
+    time.sleep(1)  # 模拟处理时间
 
 def long_task_handler(params): 
     """处理长时间任务（会超时）""" 
-    duration = params.get("duration", 5) 
-    print(f"⏳ 开始执行长时间任务，预计耗时: {duration}秒") 
+    duration = params.get("duration", 5)
+    print(f"⏳ 开始执行长时间任务，预计耗时: {duration}秒")
     time.sleep(duration)
     print("✅ 长时间任务完成")
-    return {"status": "success"}
 
 def main():
     """消费者主函数"""

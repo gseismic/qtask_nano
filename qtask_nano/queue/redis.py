@@ -205,6 +205,17 @@ class RedisQueue(BaseQueue):
                 
         logger.info(f"Moved {moved_count} timeout keys to todo")
         return moved_count
+    
+    def move_error_to_todo(self) -> int:
+        moved_count = 0
+        while True:
+            key = self.redis.rpop(self._error_rkey)
+            if key is None:
+                break
+            self.redis.lpush(self._todo_rkey, key)
+            moved_count += 1
+        logger.info(f"Moved {moved_count} error keys to todo")
+        return moved_count
         
     def cleanup_expired_keys(self):
         """清理过期Key"""
